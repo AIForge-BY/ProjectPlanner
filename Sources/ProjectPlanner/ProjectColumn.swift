@@ -36,28 +36,37 @@ struct ProjectColumn: View {
     }
 
     private var sortBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 6) {
             Text("排序")
                 .font(.caption)
                 .fontWeight(.semibold)
-                .foregroundStyle(.white.opacity(0.50))
-            Picker("排序字段", selection: $sortField) {
-                ForEach(ProjectSortField.allCases) { field in
-                    Text(field.title).tag(field)
-                }
+                .foregroundStyle(.white.opacity(0.58))
+            SortPillButton(
+                title: "时间",
+                isSelected: sortField == .time,
+                direction: sortField == .time ? sortDirection : nil,
+                accent: accent
+            ) {
+                updateSort(.time)
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            Button {
-                sortDirection.toggle()
-            } label: {
-                Image(systemName: sortDirection.systemImage)
-                    .font(.system(size: 12, weight: .bold))
-                    .frame(width: 28, height: 28)
+            SortPillButton(
+                title: "名称",
+                isSelected: sortField == .name,
+                direction: sortField == .name ? sortDirection : nil,
+                accent: accent
+            ) {
+                updateSort(.name)
             }
-            .buttonStyle(.plain)
-            .background(Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 9))
-            .help(sortDirection.title)
+            Spacer(minLength: 0)
+        }
+    }
+
+    private func updateSort(_ field: ProjectSortField) {
+        if sortField == field {
+            sortDirection.toggle()
+        } else {
+            sortField = field
+            sortDirection = .ascending
         }
     }
 
@@ -243,5 +252,49 @@ private enum ColumnHeaderIcon {
         case .expand:
             return "chevron.down"
         }
+    }
+}
+
+private struct SortPillButton: View {
+    let title: String
+    let isSelected: Bool
+    let direction: ProjectSortDirection?
+    let accent: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Text(title)
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                Image(systemName: direction?.systemImage ?? "arrow.up.arrow.down")
+                    .font(.system(size: 10, weight: .heavy))
+                    .frame(width: 12)
+            }
+            .foregroundStyle(isSelected ? Color(red: 0.02, green: 0.06, blue: 0.08) : .white.opacity(0.56))
+            .padding(.horizontal, 9)
+            .frame(height: 28)
+            .background(background, in: RoundedRectangle(cornerRadius: 9))
+            .overlay {
+                RoundedRectangle(cornerRadius: 9)
+                    .stroke(isSelected ? Color.clear : Color.white.opacity(0.10), lineWidth: 1)
+            }
+        }
+        .buttonStyle(.plain)
+        .help(helpText)
+    }
+
+    private var background: some ShapeStyle {
+        if isSelected {
+            return AnyShapeStyle(accent.opacity(0.95))
+        }
+        return AnyShapeStyle(Color.white.opacity(0.075))
+    }
+
+    private var helpText: String {
+        if let direction {
+            return "\(title)\(direction.title)"
+        }
+        return "按\(title)排序"
     }
 }

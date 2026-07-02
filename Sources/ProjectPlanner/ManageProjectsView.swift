@@ -10,16 +10,7 @@ struct ManageProjectsView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.020, green: 0.030, blue: 0.050),
-                    Color(red: 0.035, green: 0.070, blue: 0.095),
-                    Color(red: 0.025, green: 0.035, blue: 0.060)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            TechBackground()
 
             VStack(spacing: 0) {
                 toolbar
@@ -131,6 +122,111 @@ struct ManageProjectsView: View {
             ProjectColumn(title: "执行中", status: .active, accent: Color(red: 0.36, green: 0.84, blue: 0.68))
             ProjectColumn(title: "完成", status: .completed, accent: Color(red: 0.58, green: 0.50, blue: 0.88))
         }
+    }
+}
+
+private struct TechBackground: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.015, green: 0.025, blue: 0.042),
+                    Color(red: 0.026, green: 0.055, blue: 0.070),
+                    Color(red: 0.018, green: 0.026, blue: 0.048)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+
+            GridPattern()
+                .stroke(Color(red: 0.40, green: 0.82, blue: 0.92).opacity(0.055), lineWidth: 1)
+
+            CircuitPattern()
+                .stroke(Color(red: 0.42, green: 0.90, blue: 0.82).opacity(0.15), style: StrokeStyle(lineWidth: 1.1, lineCap: .round, lineJoin: .round))
+
+            CircuitNodes()
+                .fill(Color(red: 0.44, green: 0.91, blue: 0.83).opacity(0.22))
+
+            LinearGradient(
+                colors: [
+                    .clear,
+                    Color(red: 0.32, green: 0.74, blue: 0.92).opacity(0.10),
+                    .clear
+                ],
+                startPoint: .leading,
+                endPoint: .trailing
+            )
+            .rotationEffect(.degrees(-18))
+            .offset(x: -180, y: -120)
+            .blur(radius: 18)
+        }
+        .ignoresSafeArea()
+    }
+}
+
+private struct GridPattern: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let spacing: CGFloat = 36
+        var x = rect.minX
+        while x <= rect.maxX {
+            path.move(to: CGPoint(x: x, y: rect.minY))
+            path.addLine(to: CGPoint(x: x, y: rect.maxY))
+            x += spacing
+        }
+        var y = rect.minY
+        while y <= rect.maxY {
+            path.move(to: CGPoint(x: rect.minX, y: y))
+            path.addLine(to: CGPoint(x: rect.maxX, y: y))
+            y += spacing
+        }
+        return path
+    }
+}
+
+private struct CircuitPattern: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let w = rect.width
+        let h = rect.height
+
+        path.move(to: CGPoint(x: w * 0.08, y: h * 0.18))
+        path.addLine(to: CGPoint(x: w * 0.22, y: h * 0.18))
+        path.addLine(to: CGPoint(x: w * 0.30, y: h * 0.28))
+        path.addLine(to: CGPoint(x: w * 0.44, y: h * 0.28))
+
+        path.move(to: CGPoint(x: w * 0.62, y: h * 0.12))
+        path.addLine(to: CGPoint(x: w * 0.72, y: h * 0.22))
+        path.addLine(to: CGPoint(x: w * 0.88, y: h * 0.22))
+
+        path.move(to: CGPoint(x: w * 0.12, y: h * 0.78))
+        path.addLine(to: CGPoint(x: w * 0.25, y: h * 0.66))
+        path.addLine(to: CGPoint(x: w * 0.38, y: h * 0.66))
+
+        path.move(to: CGPoint(x: w * 0.58, y: h * 0.76))
+        path.addLine(to: CGPoint(x: w * 0.70, y: h * 0.62))
+        path.addLine(to: CGPoint(x: w * 0.92, y: h * 0.62))
+
+        return path
+    }
+}
+
+private struct CircuitNodes: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        let points = [
+            CGPoint(x: rect.width * 0.08, y: rect.height * 0.18),
+            CGPoint(x: rect.width * 0.44, y: rect.height * 0.28),
+            CGPoint(x: rect.width * 0.62, y: rect.height * 0.12),
+            CGPoint(x: rect.width * 0.88, y: rect.height * 0.22),
+            CGPoint(x: rect.width * 0.12, y: rect.height * 0.78),
+            CGPoint(x: rect.width * 0.38, y: rect.height * 0.66),
+            CGPoint(x: rect.width * 0.92, y: rect.height * 0.62)
+        ]
+        for point in points {
+            path.addEllipse(in: CGRect(x: point.x - 3, y: point.y - 3, width: 6, height: 6))
+        }
+        return path
     }
 }
 
