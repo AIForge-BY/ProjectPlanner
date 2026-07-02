@@ -63,8 +63,6 @@ struct TerminalOpener {
     }
 
     func commands(forDirectory directory: String) -> [CommandInvocation] {
-        let codexExecutable = codexExecutablePath()
-
         if fileExists(Self.ghosttyURL) {
             return [
                 CommandInvocation(
@@ -74,19 +72,13 @@ struct TerminalOpener {
                         Self.ghosttyURL.path,
                         "--args",
                         "--working-directory=\(directory)",
-                        "-e",
-                        codexExecutable,
-                        "resume",
-                        "--last"
+                        "--input=codex resume --last\n"
                     ]
-                ),
-                CommandInvocation(
-                    executableURL: URL(fileURLWithPath: "/usr/bin/osascript"),
-                    arguments: ["-e", #"tell application "Ghostty" to activate"#]
                 )
             ]
         }
 
+        let codexExecutable = codexExecutablePath()
         let script = """
         set targetPath to \(appleScriptStringLiteral(directory))
         set codexPath to \(appleScriptStringLiteral(codexExecutable))

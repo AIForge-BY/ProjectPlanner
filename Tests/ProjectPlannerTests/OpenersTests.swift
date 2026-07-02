@@ -34,28 +34,19 @@ final class OpenersTests: XCTestCase {
     }
 
     func testTerminalOpenerUsesGhosttyWhenInstalled() {
-        let opener = TerminalOpener(fileExists: {
-            $0.path == "/Applications/Ghostty.app" || $0.path == "/opt/homebrew/bin/codex"
-        })
+        let opener = TerminalOpener(fileExists: { $0.path == "/Applications/Ghostty.app" })
 
         let commands = opener.commands(forDirectory: "/tmp/App")
 
-        XCTAssertEqual(commands.count, 2)
+        XCTAssertEqual(commands.count, 1)
         XCTAssertEqual(commands[0].executableURL.path, "/usr/bin/open")
         XCTAssertEqual(commands[0].arguments, [
             "-na",
             "/Applications/Ghostty.app",
             "--args",
             "--working-directory=/tmp/App",
-            "-e",
-            "/opt/homebrew/bin/codex",
-            "resume",
-            "--last"
+            "--input=codex resume --last\n"
         ])
-        XCTAssertEqual(commands[1].executableURL.path, "/usr/bin/osascript")
-        XCTAssertEqual(commands[1].arguments.first, "-e")
-        XCTAssertTrue(commands[1].arguments[1].contains("tell application \"Ghostty\""))
-        XCTAssertTrue(commands[1].arguments[1].contains("activate"))
     }
 
     func testTerminalOpenerFallsBackToTerminalAppleScript() {
