@@ -79,7 +79,7 @@ struct ProjectSorter {
         case .todo:
             return project.createdAt
         case .active:
-            return project.startedAt ?? project.updatedAt
+            return project.startedAt ?? project.createdAt
         case .completed:
             return project.completedAt ?? project.updatedAt
         case .trash:

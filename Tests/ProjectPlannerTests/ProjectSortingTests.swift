@@ -79,6 +79,35 @@ final class ProjectSortingTests: XCTestCase {
         XCTAssertEqual(groups[0].projects.map { $0.alias ?? $0.name }, ["Alpha", "Beta", "Zeta"])
     }
 
+    func testLegacyActiveProjectsUseCreatedAtWhenStartedAtIsMissing() {
+        var first = project(
+            id: "00000000-0000-0000-0000-000000000121",
+            name: "First",
+            group: "客户端",
+            createdAt: 10
+        )
+        first.startedAt = nil
+        first.updatedAt = Date(timeIntervalSince1970: 1_000)
+        var second = project(
+            id: "00000000-0000-0000-0000-000000000122",
+            name: "Second",
+            group: "客户端",
+            createdAt: 20
+        )
+        second.startedAt = nil
+        second.updatedAt = Date(timeIntervalSince1970: 30)
+
+        let groups = ProjectSorter.groupedProjects(
+            [second, first],
+            status: .active,
+            sortField: .time,
+            direction: .ascending
+        )
+
+        XCTAssertEqual(ProjectSorter.time(for: first, status: .active), Date(timeIntervalSince1970: 10))
+        XCTAssertEqual(groups[0].projects.map(\.name), ["First", "Second"])
+    }
+
     private func project(
         id: String,
         name: String,
