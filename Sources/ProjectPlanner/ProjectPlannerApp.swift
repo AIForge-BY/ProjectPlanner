@@ -164,7 +164,7 @@ final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate {
             window.title = AppBrand.name
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
-            window.isMovableByWindowBackground = true
+            window.isMovableByWindowBackground = false
             window.contentView = NSHostingView(rootView: rootView)
             window.center()
             window.setFrameAutosaveName("ProjectPlannerManagementWindow")

@@ -10,6 +10,7 @@ struct ProjectColumn: View {
     var newTemplateAction: ((PlannedProject) -> Void)?
     @State private var isManaging = false
     @State private var selectedProjectIDs = Set<UUID>()
+    @State private var draggingProjectID: UUID?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -134,11 +135,16 @@ struct ProjectColumn: View {
                                     newTemplateAction: newTemplateAction
                                 )
                                 .onDrag {
-                                    NSItemProvider(object: project.id.uuidString as NSString)
+                                    draggingProjectID = project.id
+                                    return NSItemProvider(object: project.id.uuidString as NSString)
                                 }
                                 .onDrop(
                                     of: [.text],
-                                    delegate: ProjectDropDelegate(target: project, appState: appState)
+                                    delegate: ProjectDropDelegate(
+                                        target: project,
+                                        draggingProjectID: $draggingProjectID,
+                                        appState: appState
+                                    )
                                 )
                             }
                         }
@@ -231,9 +237,24 @@ private enum ColumnHeaderIcon {
 
 private struct ProjectDropDelegate: DropDelegate {
     let target: PlannedProject
+    @Binding var draggingProjectID: UUID?
     let appState: AppState
 
+    func dropEntered(info: DropInfo) {
+        moveDraggingProjectBeforeTarget()
+    }
+
+    func dropUpdated(info: DropInfo) -> DropProposal? {
+        DropProposal(operation: .move)
+    }
+
     func performDrop(info: DropInfo) -> Bool {
+        if draggingProjectID != nil {
+            moveDraggingProjectBeforeTarget()
+            draggingProjectID = nil
+            return true
+        }
+
         guard let provider = info.itemProviders(for: [.text]).first else {
             return false
         }
@@ -247,5 +268,14 @@ private struct ProjectDropDelegate: DropDelegate {
             }
         }
         return true
+    }
+
+    private func moveDraggingProjectBeforeTarget() {
+        guard let id = draggingProjectID, id != target.id else {
+            return
+        }
+        Task { @MainActor in
+            await appState.moveProject(id: id, before: target.id)
+        }
     }
 }

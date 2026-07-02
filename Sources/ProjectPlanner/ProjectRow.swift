@@ -11,7 +11,6 @@ struct ProjectRow: View {
     @State private var isEditingAlias = false
     @State private var aliasDraft = ""
     @State private var groupDraft = ""
-    @State private var isShowingProjectActions = false
     @State private var isShowingLaunchOptions = false
     @State private var isEditingGroup = false
 
@@ -53,13 +52,6 @@ struct ProjectRow: View {
                 toggleCollapsed()
             }
         }
-        .onLongPressGesture {
-            if isManaging {
-                toggleSelection()
-            } else {
-                isShowingProjectActions = true
-            }
-        }
         .contextMenu {
             Button("修改别名") {
                 beginAliasEdit()
@@ -73,23 +65,6 @@ struct ProjectRow: View {
             Button("移入回收站", role: .destructive) {
                 Task { await appState.deleteProject(id: project.id) }
             }
-        }
-        .confirmationDialog(project.alias ?? project.name, isPresented: $isShowingProjectActions) {
-            Button("修改别名") {
-                beginAliasEdit()
-            }
-            Button("设置分组") {
-                beginGroupEdit()
-            }
-            Button(isCollapsed ? "展开项目" : "折叠项目") {
-                toggleCollapsed()
-            }
-            Button("移入回收站", role: .destructive) {
-                Task { await appState.deleteProject(id: project.id) }
-            }
-            Button("取消", role: .cancel) {}
-        } message: {
-            Text("选择要对这个项目执行的操作。")
         }
         .confirmationDialog("启动待办项目", isPresented: $isShowingLaunchOptions) {
             Button("添加已有项目") {
