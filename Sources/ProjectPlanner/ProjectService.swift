@@ -231,14 +231,24 @@ struct ProjectService {
         guard let movingIndex = document.projects.firstIndex(where: { $0.id == id }) else {
             throw ProjectServiceError.projectNotFound(id)
         }
+        let moving = document.projects[movingIndex]
         guard let target = document.projects.first(where: { $0.id == targetID }) else {
             throw ProjectServiceError.projectNotFound(targetID)
+        }
+        guard moving.status == target.status, moving.groupName == target.groupName else {
+            return
         }
         let status = target.status
         var ordered = document.projects
             .filter { $0.status == status }
+            .filter { $0.groupName == target.groupName }
             .sorted { sortValue($0) < sortValue($1) }
             .map(\.id)
+        if let movingPosition = ordered.firstIndex(of: id),
+           movingPosition + 1 < ordered.count,
+           ordered[movingPosition + 1] == targetID {
+            return
+        }
         ordered.removeAll { $0 == id }
         guard let targetIndex = ordered.firstIndex(of: targetID) else { return }
         ordered.insert(id, at: targetIndex)
@@ -248,8 +258,6 @@ struct ProjectService {
                 document.projects[documentIndex].updatedAt = now()
             }
         }
-        document.projects[movingIndex].status = status
-        document.projects[movingIndex].groupName = target.groupName
     }
 
     func moveToTrash(id: UUID, in document: inout ProjectDocument) throws {

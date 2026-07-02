@@ -11,6 +11,7 @@ struct ProjectColumn: View {
     @State private var isManaging = false
     @State private var selectedProjectIDs = Set<UUID>()
     @State private var draggingProjectID: UUID?
+    @State private var lastDropTargetID: UUID?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -136,6 +137,7 @@ struct ProjectColumn: View {
                                 )
                                 .onDrag {
                                     draggingProjectID = project.id
+                                    lastDropTargetID = nil
                                     return NSItemProvider(object: project.id.uuidString as NSString)
                                 }
                                 .onDrop(
@@ -143,6 +145,8 @@ struct ProjectColumn: View {
                                     delegate: ProjectDropDelegate(
                                         target: project,
                                         draggingProjectID: $draggingProjectID,
+                                        lastDropTargetID: $lastDropTargetID,
+                                        projects: projects,
                                         appState: appState
                                     )
                                 )
@@ -151,6 +155,7 @@ struct ProjectColumn: View {
                     }
                 }
                 .padding(.vertical, 2)
+                .animation(.easeInOut(duration: 0.12), value: projects.map(\.id))
             }
         }
     }
@@ -238,6 +243,8 @@ private enum ColumnHeaderIcon {
 private struct ProjectDropDelegate: DropDelegate {
     let target: PlannedProject
     @Binding var draggingProjectID: UUID?
+    @Binding var lastDropTargetID: UUID?
+    let projects: [PlannedProject]
     let appState: AppState
 
     func dropEntered(info: DropInfo) {
@@ -252,6 +259,7 @@ private struct ProjectDropDelegate: DropDelegate {
         if draggingProjectID != nil {
             moveDraggingProjectBeforeTarget()
             draggingProjectID = nil
+            lastDropTargetID = nil
             return true
         }
 
@@ -271,9 +279,15 @@ private struct ProjectDropDelegate: DropDelegate {
     }
 
     private func moveDraggingProjectBeforeTarget() {
-        guard let id = draggingProjectID, id != target.id else {
+        guard let id = draggingProjectID,
+              id != target.id,
+              let moving = projects.first(where: { $0.id == id }),
+              moving.status == target.status,
+              moving.groupName == target.groupName,
+              lastDropTargetID != target.id else {
             return
         }
+        lastDropTargetID = target.id
         Task { @MainActor in
             await appState.moveProject(id: id, before: target.id)
         }
