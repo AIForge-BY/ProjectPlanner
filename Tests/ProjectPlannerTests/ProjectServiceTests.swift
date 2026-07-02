@@ -102,6 +102,7 @@ final class ProjectServiceTests: XCTestCase {
             now: Date(timeIntervalSince1970: 10)
         )
         project.status = .completed
+        project.startedAt = Date(timeIntervalSince1970: 15)
         project.completedAt = Date(timeIntervalSince1970: 20)
         var document = ProjectDocument(projects: [project])
         let service = ProjectService(now: { Date(timeIntervalSince1970: 700) })
@@ -109,9 +110,31 @@ final class ProjectServiceTests: XCTestCase {
         try service.reopenProject(id: project.id, in: &document)
 
         XCTAssertEqual(document.projects[0].status, .active)
-        XCTAssertEqual(document.projects[0].startedAt, Date(timeIntervalSince1970: 700))
+        XCTAssertEqual(document.projects[0].startedAt, Date(timeIntervalSince1970: 15))
         XCTAssertNil(document.projects[0].completedAt)
         XCTAssertEqual(document.projects[0].updatedAt, Date(timeIntervalSince1970: 700))
+    }
+
+    func testReopenLegacyProjectUsesCreatedAtAsStartTime() throws {
+        var project = PlannedProject.existingProject(
+            id: UUID(uuidString: "00000000-0000-0000-0000-000000000019")!,
+            name: "Legacy",
+            path: "/tmp/Legacy",
+            type: .other,
+            now: Date(timeIntervalSince1970: 10)
+        )
+        project.status = .completed
+        project.startedAt = nil
+        project.completedAt = Date(timeIntervalSince1970: 20)
+        var document = ProjectDocument(projects: [project])
+        let service = ProjectService(now: { Date(timeIntervalSince1970: 710) })
+
+        try service.reopenProject(id: project.id, in: &document)
+
+        XCTAssertEqual(document.projects[0].status, .active)
+        XCTAssertEqual(document.projects[0].startedAt, Date(timeIntervalSince1970: 10))
+        XCTAssertNil(document.projects[0].completedAt)
+        XCTAssertEqual(document.projects[0].updatedAt, Date(timeIntervalSince1970: 710))
     }
 
     func testUpdateAndDeleteProject() throws {

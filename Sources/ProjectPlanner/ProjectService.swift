@@ -87,7 +87,14 @@ struct ProjectService {
     }
 
     func reopenProject(id: UUID, in document: inout ProjectDocument) throws {
-        try startProject(id: id, in: &document)
+        try update(id: id, in: &document) { project in
+            let timestamp = now()
+            project.status = .active
+            project.completedAt = nil
+            project.startedAt = project.startedAt ?? project.createdAt
+            project.isCollapsed = true
+            project.updatedAt = timestamp
+        }
     }
 
     func updateProject(
