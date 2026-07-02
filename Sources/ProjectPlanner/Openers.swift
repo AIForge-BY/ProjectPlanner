@@ -47,6 +47,10 @@ struct FinderOpener {
 
 struct TerminalOpener {
     private static let ghosttyURL = URL(fileURLWithPath: "/Applications/Ghostty.app")
+    private static let codexExecutableURLs = [
+        URL(fileURLWithPath: "/opt/homebrew/bin/codex"),
+        URL(fileURLWithPath: "/usr/local/bin/codex")
+    ]
 
     let fileExists: (URL) -> Bool
 
@@ -59,6 +63,8 @@ struct TerminalOpener {
     }
 
     func commands(forDirectory directory: String) -> [CommandInvocation] {
+        let codexExecutable = codexExecutablePath()
+
         if fileExists(Self.ghosttyURL) {
             return [
                 CommandInvocation(
@@ -69,7 +75,7 @@ struct TerminalOpener {
                         "--args",
                         "--working-directory=\(directory)",
                         "-e",
-                        "codex",
+                        codexExecutable,
                         "resume",
                         "--last"
                     ]
@@ -83,9 +89,10 @@ struct TerminalOpener {
 
         let script = """
         set targetPath to \(appleScriptStringLiteral(directory))
+        set codexPath to \(appleScriptStringLiteral(codexExecutable))
         tell application "Terminal"
             activate
-            do script "cd " & quoted form of targetPath & " && codex resume --last"
+            do script "cd " & quoted form of targetPath & " && " & quoted form of codexPath & " resume --last"
         end tell
         """
         return [CommandInvocation(
@@ -99,5 +106,9 @@ struct TerminalOpener {
             .replacingOccurrences(of: "\\", with: "\\\\")
             .replacingOccurrences(of: "\"", with: "\\\"")
         return "\"\(escaped)\""
+    }
+
+    private func codexExecutablePath() -> String {
+        Self.codexExecutableURLs.first(where: fileExists)?.path ?? "codex"
     }
 }

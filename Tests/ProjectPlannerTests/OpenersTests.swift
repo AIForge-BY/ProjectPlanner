@@ -34,7 +34,9 @@ final class OpenersTests: XCTestCase {
     }
 
     func testTerminalOpenerUsesGhosttyWhenInstalled() {
-        let opener = TerminalOpener(fileExists: { $0.path == "/Applications/Ghostty.app" })
+        let opener = TerminalOpener(fileExists: {
+            $0.path == "/Applications/Ghostty.app" || $0.path == "/opt/homebrew/bin/codex"
+        })
 
         let commands = opener.commands(forDirectory: "/tmp/App")
 
@@ -46,7 +48,7 @@ final class OpenersTests: XCTestCase {
             "--args",
             "--working-directory=/tmp/App",
             "-e",
-            "codex",
+            "/opt/homebrew/bin/codex",
             "resume",
             "--last"
         ])
@@ -57,7 +59,7 @@ final class OpenersTests: XCTestCase {
     }
 
     func testTerminalOpenerFallsBackToTerminalAppleScript() {
-        let opener = TerminalOpener(fileExists: { _ in false })
+        let opener = TerminalOpener(fileExists: { $0.path == "/opt/homebrew/bin/codex" })
 
         let command = opener.command(forDirectory: "/tmp/App With Space")
 
@@ -67,7 +69,9 @@ final class OpenersTests: XCTestCase {
         XCTAssertTrue(command.arguments[1].contains("tell application \"Terminal\""))
         XCTAssertTrue(command.arguments[1].contains("quoted form of targetPath"))
         XCTAssertTrue(command.arguments[1].contains("\"/tmp/App With Space\""))
-        XCTAssertTrue(command.arguments[1].contains("&& codex resume --last"))
+        XCTAssertTrue(command.arguments[1].contains("set codexPath to \"/opt/homebrew/bin/codex\""))
+        XCTAssertTrue(command.arguments[1].contains("quoted form of codexPath"))
+        XCTAssertTrue(command.arguments[1].contains(" resume --last"))
     }
 
     func testFinderOpenerUsesOpenCommand() {
