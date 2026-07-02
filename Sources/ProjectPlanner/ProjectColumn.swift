@@ -1,5 +1,4 @@
 import SwiftUI
-import UniformTypeIdentifiers
 
 struct ProjectColumn: View {
     @EnvironmentObject private var appState: AppState
@@ -10,12 +9,13 @@ struct ProjectColumn: View {
     var newTemplateAction: ((PlannedProject) -> Void)?
     @State private var isManaging = false
     @State private var selectedProjectIDs = Set<UUID>()
-    @State private var draggingProjectID: UUID?
-    @State private var lastDropTargetID: UUID?
+    @State private var sortField: ProjectSortField = .time
+    @State private var sortDirection: ProjectSortDirection = .ascending
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
+            sortBar
             managementBar
             content
         }
@@ -32,6 +32,32 @@ struct ProjectColumn: View {
         .overlay {
             RoundedRectangle(cornerRadius: 18)
                 .stroke(accent.opacity(0.18), lineWidth: 1)
+        }
+    }
+
+    private var sortBar: some View {
+        HStack(spacing: 8) {
+            Text("排序")
+                .font(.caption)
+                .fontWeight(.semibold)
+                .foregroundStyle(.white.opacity(0.50))
+            Picker("排序字段", selection: $sortField) {
+                ForEach(ProjectSortField.allCases) { field in
+                    Text(field.title).tag(field)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+            Button {
+                sortDirection.toggle()
+            } label: {
+                Image(systemName: sortDirection.systemImage)
+                    .font(.system(size: 12, weight: .bold))
+                    .frame(width: 28, height: 28)
+            }
+            .buttonStyle(.plain)
+            .background(Color.white.opacity(0.09), in: RoundedRectangle(cornerRadius: 9))
+            .help(sortDirection.title)
         }
     }
 
@@ -135,24 +161,6 @@ struct ProjectColumn: View {
                                     newExistingAction: newExistingAction,
                                     newTemplateAction: newTemplateAction
                                 )
-                                .onDrag {
-                                    draggingProjectID = project.id
-                                    lastDropTargetID = nil
-                                    return NSItemProvider(object: project.id.uuidString as NSString)
-                                } preview: {
-                                    Color.clear
-                                        .frame(width: 1, height: 1)
-                                }
-                                .onDrop(
-                                    of: [.text],
-                                    delegate: ProjectDropDelegate(
-                                        target: project,
-                                        draggingProjectID: $draggingProjectID,
-                                        lastDropTargetID: $lastDropTargetID,
-                                        projects: projects,
-                                        appState: appState
-                                    )
-                                )
                             }
                         }
                     }
@@ -168,15 +176,10 @@ struct ProjectColumn: View {
     }
 
     private var groupedProjects: [(name: String, projects: [PlannedProject])] {
-        let groups = Dictionary(grouping: projects) { project in
-            project.groupName?.isEmpty == false ? project.groupName! : "未分组"
-        }
-        return groups
-            .map { (name: $0.key, projects: $0.value) }
-            .sorted { lhs, rhs in
-                if lhs.name == "未分组" { return true }
-                if rhs.name == "未分组" { return false }
-                return lhs.name < rhs.name
+        ProjectSorter
+            .groupedProjects(projects, status: status, sortField: sortField, direction: sortDirection)
+            .map { section in
+                (name: section.name, projects: section.projects)
             }
     }
 
@@ -239,60 +242,6 @@ private enum ColumnHeaderIcon {
             return "chevron.up"
         case .expand:
             return "chevron.down"
-        }
-    }
-}
-
-private struct ProjectDropDelegate: DropDelegate {
-    let target: PlannedProject
-    @Binding var draggingProjectID: UUID?
-    @Binding var lastDropTargetID: UUID?
-    let projects: [PlannedProject]
-    let appState: AppState
-
-    func dropEntered(info: DropInfo) {
-        moveDraggingProjectBeforeTarget()
-    }
-
-    func dropUpdated(info: DropInfo) -> DropProposal? {
-        DropProposal(operation: .move)
-    }
-
-    func performDrop(info: DropInfo) -> Bool {
-        if draggingProjectID != nil {
-            moveDraggingProjectBeforeTarget()
-            draggingProjectID = nil
-            lastDropTargetID = nil
-            return true
-        }
-
-        guard let provider = info.itemProviders(for: [.text]).first else {
-            return false
-        }
-        provider.loadItem(forTypeIdentifier: "public.text", options: nil) { item, _ in
-            let value = (item as? Data).flatMap { String(data: $0, encoding: .utf8) } ?? item as? String
-            guard let value, let id = UUID(uuidString: value), id != target.id else {
-                return
-            }
-            Task { @MainActor in
-                await appState.moveProject(id: id, before: target.id)
-            }
-        }
-        return true
-    }
-
-    private func moveDraggingProjectBeforeTarget() {
-        guard let id = draggingProjectID,
-              id != target.id,
-              let moving = projects.first(where: { $0.id == id }),
-              moving.status == target.status,
-              moving.groupName == target.groupName,
-              lastDropTargetID != target.id else {
-            return
-        }
-        lastDropTargetID = target.id
-        Task { @MainActor in
-            await appState.moveProject(id: id, before: target.id)
         }
     }
 }

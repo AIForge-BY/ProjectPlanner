@@ -88,6 +88,7 @@ final class ProjectServiceTests: XCTestCase {
         try service.completeProject(id: document.projects[0].id, in: &document)
 
         XCTAssertEqual(document.projects[0].status, .completed)
+        XCTAssertEqual(document.projects[0].startedAt, Date(timeIntervalSince1970: 600))
         XCTAssertEqual(document.projects[0].completedAt, Date(timeIntervalSince1970: 600))
         XCTAssertEqual(document.projects[0].updatedAt, Date(timeIntervalSince1970: 600))
     }
@@ -108,6 +109,7 @@ final class ProjectServiceTests: XCTestCase {
         try service.reopenProject(id: project.id, in: &document)
 
         XCTAssertEqual(document.projects[0].status, .active)
+        XCTAssertEqual(document.projects[0].startedAt, Date(timeIntervalSince1970: 700))
         XCTAssertNil(document.projects[0].completedAt)
         XCTAssertEqual(document.projects[0].updatedAt, Date(timeIntervalSince1970: 700))
     }
@@ -215,7 +217,7 @@ final class ProjectServiceTests: XCTestCase {
         XCTAssertNil(document.projects[0].alias)
     }
 
-    func testUpdateGroupCollapseAndReorderProjects() throws {
+    func testUpdateGroupCollapseAndManageGroups() throws {
         let first = PlannedProject.existingProject(
             id: UUID(uuidString: "00000000-0000-0000-0000-000000000021")!,
             name: "First",
@@ -239,76 +241,12 @@ final class ProjectServiceTests: XCTestCase {
         try service.updateGroup(id: first.id, groupName: "客户端", in: &document)
         service.createGroup("后端", in: &document)
         service.moveProjects(ids: [second.id], toGroup: "后端", in: &document)
-        service.moveProjects(ids: [second.id], toGroup: "客户端", in: &document)
         try service.setCollapsed(id: first.id, isCollapsed: true, in: &document)
-        try service.moveProject(id: second.id, before: first.id, in: &document)
 
         XCTAssertEqual(document.projects[0].groupName, "客户端")
+        XCTAssertEqual(document.projects[1].groupName, "后端")
         XCTAssertEqual(document.groups?.map(\.name), ["后端", "客户端"])
         XCTAssertEqual(document.projects[0].isCollapsed, true)
-        XCTAssertLessThan(document.projects[1].sortOrder ?? 0, document.projects[0].sortOrder ?? 0)
-    }
-
-    func testMoveProjectIgnoresDifferentGroups() throws {
-        var first = PlannedProject.existingProject(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000041")!,
-            name: "First",
-            path: "/tmp/First",
-            type: .ios,
-            now: Date(timeIntervalSince1970: 10)
-        )
-        first.groupName = "客户端"
-        first.sortOrder = 0
-        var second = PlannedProject.existingProject(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000042")!,
-            name: "Second",
-            path: "/tmp/Second",
-            type: .ios,
-            now: Date(timeIntervalSince1970: 20)
-        )
-        second.groupName = "后端"
-        second.sortOrder = 1
-        var document = ProjectDocument(projects: [first, second])
-        let service = ProjectService(now: { Date(timeIntervalSince1970: 930) })
-
-        try service.moveProject(id: second.id, before: first.id, in: &document)
-
-        XCTAssertEqual(document.projects[0].groupName, "客户端")
-        XCTAssertEqual(document.projects[0].sortOrder, 0)
-        XCTAssertEqual(document.projects[0].updatedAt, first.updatedAt)
-        XCTAssertEqual(document.projects[1].groupName, "后端")
-        XCTAssertEqual(document.projects[1].sortOrder, 1)
-        XCTAssertEqual(document.projects[1].updatedAt, second.updatedAt)
-    }
-
-    func testMoveProjectAlreadyBeforeTargetIsNoOp() throws {
-        var first = PlannedProject.existingProject(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000043")!,
-            name: "First",
-            path: "/tmp/First",
-            type: .ios,
-            now: Date(timeIntervalSince1970: 10)
-        )
-        first.groupName = "客户端"
-        first.sortOrder = 0
-        var second = PlannedProject.existingProject(
-            id: UUID(uuidString: "00000000-0000-0000-0000-000000000044")!,
-            name: "Second",
-            path: "/tmp/Second",
-            type: .ios,
-            now: Date(timeIntervalSince1970: 20)
-        )
-        second.groupName = "客户端"
-        second.sortOrder = 1
-        var document = ProjectDocument(projects: [first, second])
-        let service = ProjectService(now: { Date(timeIntervalSince1970: 940) })
-
-        try service.moveProject(id: first.id, before: second.id, in: &document)
-
-        XCTAssertEqual(document.projects[0].sortOrder, 0)
-        XCTAssertEqual(document.projects[0].updatedAt, first.updatedAt)
-        XCTAssertEqual(document.projects[1].sortOrder, 1)
-        XCTAssertEqual(document.projects[1].updatedAt, second.updatedAt)
     }
 
     func testSetCollapsedForStatusOnlyUpdatesProjectsInThatColumn() {

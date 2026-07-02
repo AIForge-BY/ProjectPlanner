@@ -43,6 +43,7 @@ Project records are stored locally:
 ```
 
 The data file is JSON and includes a schema version plus project records.
+Project records keep creation time, optional start time for active projects, and completion time for completed projects.
 
 ## Remote Repository Behavior
 

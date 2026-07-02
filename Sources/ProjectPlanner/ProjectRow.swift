@@ -19,12 +19,6 @@ struct ProjectRow: View {
             header
 
             if !isCollapsed {
-                if let completedAt = project.completedAt {
-                    Text("完成时间：\(completedAt.formatted(date: .abbreviated, time: .shortened))")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.52))
-                }
-
                 if !isManaging {
                     actions
                 }
@@ -120,6 +114,10 @@ struct ProjectRow: View {
                         .foregroundStyle(.white.opacity(0.46))
                         .lineLimit(1)
                 }
+                Text(timeMetadata)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.52))
+                    .lineLimit(1)
                 if !isCollapsed {
                     Text(project.path)
                         .font(.caption)
@@ -205,6 +203,27 @@ struct ProjectRow: View {
 
     private var shouldShowType: Bool {
         !(project.status == .todo && project.path.isEmpty)
+    }
+
+    private var timeMetadata: String {
+        "\(timeTitle)：\(timeValue.formatted(date: .abbreviated, time: .shortened))"
+    }
+
+    private var timeTitle: String {
+        switch project.status {
+        case .todo:
+            return "创建时间"
+        case .active:
+            return "启动时间"
+        case .completed:
+            return "完成时间"
+        case .trash:
+            return "更新时间"
+        }
+    }
+
+    private var timeValue: Date {
+        ProjectSorter.time(for: project, status: project.status)
     }
 
     private var buttonColumns: [GridItem] {

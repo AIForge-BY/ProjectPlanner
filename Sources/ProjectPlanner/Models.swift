@@ -119,6 +119,7 @@ struct PlannedProject: Identifiable, Codable, Equatable {
     var status: ProjectStatus
     var statusBeforeTrash: ProjectStatus?
     var createdAt: Date
+    var startedAt: Date?
     var updatedAt: Date
     var completedAt: Date?
     var remote: RemoteInfo
@@ -147,6 +148,7 @@ struct PlannedProject: Identifiable, Codable, Equatable {
             status: .active,
             statusBeforeTrash: nil,
             createdAt: now,
+            startedAt: now,
             updatedAt: now,
             completedAt: nil,
             remote: .none,
@@ -175,6 +177,7 @@ struct PlannedProject: Identifiable, Codable, Equatable {
             status: .todo,
             statusBeforeTrash: nil,
             createdAt: now,
+            startedAt: nil,
             updatedAt: now,
             completedAt: nil,
             remote: .none,

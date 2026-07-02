@@ -67,10 +67,12 @@ struct ProjectService {
 
     func startProject(id: UUID, in document: inout ProjectDocument) throws {
         try update(id: id, in: &document) { project in
+            let timestamp = now()
             project.status = .active
             project.completedAt = nil
+            project.startedAt = timestamp
             project.isCollapsed = true
-            project.updatedAt = now()
+            project.updatedAt = timestamp
         }
     }
 
@@ -115,6 +117,7 @@ struct ProjectService {
         customType: String? = nil,
         in document: inout ProjectDocument
     ) throws {
+        let timestamp = now()
         try update(id: id, in: &document) { project in
             project.name = name
             project.path = path
@@ -122,8 +125,9 @@ struct ProjectService {
             project.customType = normalizedCustomType(customType)
             project.status = .active
             project.completedAt = nil
+            project.startedAt = timestamp
             project.isCollapsed = true
-            project.updatedAt = now()
+            project.updatedAt = timestamp
         }
     }
 
@@ -138,6 +142,7 @@ struct ProjectService {
         remote: RemoteInfo,
         in document: inout ProjectDocument
     ) throws {
+        let timestamp = now()
         try update(id: id, in: &document) { project in
             project.name = name
             project.path = path
@@ -145,10 +150,11 @@ struct ProjectService {
             project.customType = normalizedCustomType(customType)
             project.status = .active
             project.completedAt = nil
+            project.startedAt = timestamp
             project.isCollapsed = true
             project.remote = remote
             project.template = TemplateInfo(id: templateID, version: templateVersion)
-            project.updatedAt = now()
+            project.updatedAt = timestamp
         }
     }
 
@@ -226,40 +232,6 @@ struct ProjectService {
         }
     }
 
-    func moveProject(id: UUID, before targetID: UUID, in document: inout ProjectDocument) throws {
-        guard id != targetID else { return }
-        guard let movingIndex = document.projects.firstIndex(where: { $0.id == id }) else {
-            throw ProjectServiceError.projectNotFound(id)
-        }
-        let moving = document.projects[movingIndex]
-        guard let target = document.projects.first(where: { $0.id == targetID }) else {
-            throw ProjectServiceError.projectNotFound(targetID)
-        }
-        guard moving.status == target.status, moving.groupName == target.groupName else {
-            return
-        }
-        let status = target.status
-        var ordered = document.projects
-            .filter { $0.status == status }
-            .filter { $0.groupName == target.groupName }
-            .sorted { sortValue($0) < sortValue($1) }
-            .map(\.id)
-        if let movingPosition = ordered.firstIndex(of: id),
-           movingPosition + 1 < ordered.count,
-           ordered[movingPosition + 1] == targetID {
-            return
-        }
-        ordered.removeAll { $0 == id }
-        guard let targetIndex = ordered.firstIndex(of: targetID) else { return }
-        ordered.insert(id, at: targetIndex)
-        for (index, projectID) in ordered.enumerated() {
-            if let documentIndex = document.projects.firstIndex(where: { $0.id == projectID }) {
-                document.projects[documentIndex].sortOrder = Double(index)
-                document.projects[documentIndex].updatedAt = now()
-            }
-        }
-    }
-
     func moveToTrash(id: UUID, in document: inout ProjectDocument) throws {
         try update(id: id, in: &document) { project in
             if project.status != .trash {
@@ -326,7 +298,4 @@ struct ProjectService {
         return name
     }
 
-    private func sortValue(_ project: PlannedProject) -> Double {
-        project.sortOrder ?? project.createdAt.timeIntervalSince1970
-    }
 }

@@ -204,12 +204,6 @@ final class AppState: ObservableObject {
         }
     }
 
-    func moveProject(id: UUID, before targetID: UUID) async {
-        await mutateAndSave {
-            try projectService.moveProject(id: id, before: targetID, in: &document)
-        }
-    }
-
     func openFolder(project: PlannedProject) async {
         await run(FinderOpener().command(forDirectory: project.path))
     }
@@ -228,16 +222,9 @@ final class AppState: ObservableObject {
     }
 
     func projects(with status: ProjectStatus) -> [PlannedProject] {
-        document.projects
-            .filter { $0.status == status }
-            .sorted { lhs, rhs in
-                let lhsGroup = lhs.groupName ?? ""
-                let rhsGroup = rhs.groupName ?? ""
-                if lhsGroup != rhsGroup {
-                    return lhsGroup < rhsGroup
-                }
-                return (lhs.sortOrder ?? lhs.createdAt.timeIntervalSince1970) < (rhs.sortOrder ?? rhs.createdAt.timeIntervalSince1970)
-            }
+        ProjectSorter
+            .groupedProjects(document.projects, status: status, sortField: .time, direction: .ascending)
+            .flatMap(\.projects)
     }
 
     func groupNames() -> [String] {
