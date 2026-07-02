@@ -139,6 +139,9 @@ struct ProjectColumn: View {
                                     draggingProjectID = project.id
                                     lastDropTargetID = nil
                                     return NSItemProvider(object: project.id.uuidString as NSString)
+                                } preview: {
+                                    Color.clear
+                                        .frame(width: 1, height: 1)
                                 }
                                 .onDrop(
                                     of: [.text],
