@@ -17,7 +17,7 @@ struct ProjectPlannerApp: App {
 }
 
 @MainActor
-final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate {
+final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private let appState = AppState()
     private var statusItem: NSStatusItem?
     private var managementWindow: NSWindow?
@@ -36,6 +36,17 @@ final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         showManagementWindow()
         return true
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        false
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow, window === managementWindow else {
+            return
+        }
+        managementWindow = nil
     }
 
     private func createStatusItem() {
@@ -164,8 +175,8 @@ final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate {
             window.title = AppBrand.name
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
-            window.isReleasedWhenClosed = false
             window.isMovableByWindowBackground = false
+            window.delegate = self
             window.contentView = NSHostingView(rootView: rootView)
             window.center()
             window.setFrameAutosaveName("ProjectPlannerManagementWindow")
