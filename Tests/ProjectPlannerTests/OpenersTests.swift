@@ -33,20 +33,22 @@ final class OpenersTests: XCTestCase {
         XCTAssertEqual(command.arguments, ["code-insiders", "/tmp/App"])
     }
 
-    func testTerminalOpenerUsesGhosttyWhenInstalled() {
+    func testTerminalOpenerCreatesGhosttyTabWhenInstalled() {
         let opener = TerminalOpener(fileExists: { $0.path == "/Applications/Ghostty.app" })
 
         let commands = opener.commands(forDirectory: "/tmp/App")
 
         XCTAssertEqual(commands.count, 1)
-        XCTAssertEqual(commands[0].executableURL.path, "/usr/bin/open")
-        XCTAssertEqual(commands[0].arguments, [
-            "-a",
-            "/Applications/Ghostty.app",
-            "--args",
-            "--working-directory=/tmp/App",
-            "--input=codex resume --last\n"
-        ])
+        XCTAssertEqual(commands[0].executableURL.path, "/usr/bin/osascript")
+        XCTAssertEqual(commands[0].arguments.count, 2)
+        XCTAssertEqual(commands[0].arguments[0], "-e")
+        XCTAssertTrue(commands[0].arguments[1].contains("tell application \"Ghostty\""))
+        XCTAssertTrue(commands[0].arguments[1].contains("new tab in front window with configuration surfaceConfig"))
+        XCTAssertTrue(commands[0].arguments[1].contains("new window with configuration surfaceConfig"))
+        XCTAssertTrue(commands[0].arguments[1].contains("initial working directory:targetPath"))
+        XCTAssertTrue(commands[0].arguments[1].contains("set initialCommand to \"codex resume --last\" & linefeed"))
+        XCTAssertTrue(commands[0].arguments[1].contains("initial input:initialCommand"))
+        XCTAssertTrue(commands[0].arguments[1].contains("\"/tmp/App\""))
     }
 
     func testTerminalOpenerFallsBackToTerminalAppleScript() {

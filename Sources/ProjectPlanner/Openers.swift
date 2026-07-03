@@ -64,18 +64,23 @@ struct TerminalOpener {
 
     func commands(forDirectory directory: String) -> [CommandInvocation] {
         if fileExists(Self.ghosttyURL) {
-            return [
-                CommandInvocation(
-                    executableURL: URL(fileURLWithPath: "/usr/bin/open"),
-                    arguments: [
-                        "-a",
-                        Self.ghosttyURL.path,
-                        "--args",
-                        "--working-directory=\(directory)",
-                        "--input=codex resume --last\n"
-                    ]
-                )
-            ]
+            let script = """
+            set targetPath to \(appleScriptStringLiteral(directory))
+            set initialCommand to "codex resume --last" & linefeed
+            tell application "Ghostty"
+                activate
+                set surfaceConfig to new surface configuration from {initial working directory:targetPath, initial input:initialCommand}
+                if (count of windows) is 0 then
+                    new window with configuration surfaceConfig
+                else
+                    new tab in front window with configuration surfaceConfig
+                end if
+            end tell
+            """
+            return [CommandInvocation(
+                executableURL: URL(fileURLWithPath: "/usr/bin/osascript"),
+                arguments: ["-e", script]
+            )]
         }
 
         let codexExecutable = codexExecutablePath()
