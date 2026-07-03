@@ -42,11 +42,9 @@ final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate, NSWindow
         false
     }
 
-    func windowWillClose(_ notification: Notification) {
-        guard let window = notification.object as? NSWindow, window === managementWindow else {
-            return
-        }
-        managementWindow = nil
+    func windowShouldClose(_ sender: NSWindow) -> Bool {
+        sender.orderOut(nil)
+        return false
     }
 
     private func createStatusItem() {
@@ -175,6 +173,7 @@ final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate, NSWindow
             window.title = AppBrand.name
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
+            window.isReleasedWhenClosed = false
             window.isMovableByWindowBackground = false
             window.delegate = self
             window.contentView = NSHostingView(rootView: rootView)
