@@ -41,7 +41,7 @@ final class OpenersTests: XCTestCase {
         XCTAssertEqual(commands.count, 1)
         XCTAssertEqual(commands[0].executableURL.path, "/usr/bin/open")
         XCTAssertEqual(commands[0].arguments, [
-            "-na",
+            "-a",
             "/Applications/Ghostty.app",
             "--args",
             "--working-directory=/tmp/App",

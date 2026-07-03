@@ -68,7 +68,7 @@ struct TerminalOpener {
                 CommandInvocation(
                     executableURL: URL(fileURLWithPath: "/usr/bin/open"),
                     arguments: [
-                        "-na",
+                        "-a",
                         Self.ghosttyURL.path,
                         "--args",
                         "--working-directory=\(directory)",
