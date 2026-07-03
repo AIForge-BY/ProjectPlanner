@@ -164,6 +164,7 @@ final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate {
             window.title = AppBrand.name
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
+            window.isReleasedWhenClosed = false
             window.isMovableByWindowBackground = false
             window.contentView = NSHostingView(rootView: rootView)
             window.center()
