@@ -174,6 +174,12 @@ struct ProjectRow: View {
                     Task { await appState.completeProject(id: project.id) }
                 }
             case .completed:
+                smallButton("文件夹", systemImage: "folder") {
+                    Task { await appState.openFolder(project: project) }
+                }
+                smallButton("终端", systemImage: "terminal") {
+                    Task { await appState.openTerminal(project: project) }
+                }
                 smallButton("重新开启", systemImage: "arrow.uturn.left") {
                     Task { await appState.reopenProject(id: project.id) }
                 }
