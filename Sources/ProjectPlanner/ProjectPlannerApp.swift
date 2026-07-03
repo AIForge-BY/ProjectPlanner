@@ -44,6 +44,7 @@ final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate, NSWindow
 
     func windowShouldClose(_ sender: NSWindow) -> Bool {
         sender.orderOut(nil)
+        NSApplication.shared.setActivationPolicy(.accessory)
         return false
     }
 
@@ -160,6 +161,7 @@ final class ProjectPlannerAppDelegate: NSObject, NSApplicationDelegate, NSWindow
     }
 
     private func showManagementWindow() {
+        NSApplication.shared.setActivationPolicy(.regular)
         if managementWindow == nil {
             let rootView = ManageProjectsView()
                 .environmentObject(appState)
