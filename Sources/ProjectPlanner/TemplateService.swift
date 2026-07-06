@@ -139,60 +139,381 @@ struct TemplateService {
     }
 
     private func generateHarmony(name: String, at directory: URL) throws {
+        let bundleName = "com.example.\(sanitizedIdentifier(name).lowercased())"
+        let appName = jsonStringLiteral(name)
+        let pageGreeting = arkTSStringLiteral("Hello, \(name)")
+        let placeholderPNG = Self.placeholderPNGData
+
         try write("build-profile.json5", """
         {
-          app: {
-            products: [{ name: "default", signingConfig: "default" }]
+          "app": {
+            "signingConfigs": [],
+            "products": [
+              {
+                "name": "default",
+                "signingConfig": "default",
+                "targetSdkVersion": "6.1.0(23)",
+                "compatibleSdkVersion": "6.1.0(23)",
+                "runtimeOS": "HarmonyOS",
+                "buildOption": {
+                  "strictMode": {
+                    "caseSensitiveCheck": true,
+                    "useNormalizedOHMUrl": true
+                  }
+                }
+              }
+            ],
+            "buildModeSet": [
+              {
+                "name": "debug"
+              },
+              {
+                "name": "release"
+              }
+            ]
           },
-          modules: [{ name: "entry", srcPath: "./entry" }]
+          "modules": [
+            {
+              "name": "entry",
+              "srcPath": "./entry",
+              "targets": [
+                {
+                  "name": "default",
+                  "applyToProducts": [
+                    "default"
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+        """, at: directory)
+        try write("hvigorfile.ts", """
+        import { appTasks } from '@ohos/hvigor-ohos-plugin';
+
+        export default {
+          system: appTasks,
+          plugins: []
+        }
+        """, at: directory)
+        try write("hvigor/hvigor-config.json5", """
+        {
+          "modelVersion": "6.1.0",
+          "dependencies": {},
+          "execution": {},
+          "logging": {},
+          "debugging": {},
+          "nodeOptions": {}
+        }
+        """, at: directory)
+        try write("oh-package.json5", """
+        {
+          "modelVersion": "6.1.0",
+          "description": "HarmonyOS project created by ProjectPlanner.",
+          "dependencies": {},
+          "devDependencies": {
+            "@ohos/hypium": "1.0.25",
+            "@ohos/hamock": "1.0.0"
+          }
+        }
+        """, at: directory)
+        try write("code-linter.json5", """
+        {
+          "files": [
+            "**/*.ets"
+          ],
+          "ignore": [
+            "**/src/ohosTest/**/*",
+            "**/src/test/**/*",
+            "**/src/mock/**/*",
+            "**/node_modules/**/*",
+            "**/oh_modules/**/*",
+            "**/build/**/*",
+            "**/.preview/**/*"
+          ],
+          "ruleSet": [
+            "plugin:@performance/recommended",
+            "plugin:@typescript-eslint/recommended"
+          ],
+          "rules": {}
         }
         """, at: directory)
         try write("AppScope/app.json5", """
         {
-          app: {
-            bundleName: "com.example.\(sanitizedIdentifier(name).lowercased())",
-            vendor: "example",
-            versionCode: 1000000,
-            versionName: "1.0.0"
+          "app": {
+            "bundleName": "\(bundleName)",
+            "vendor": "example",
+            "versionCode": 1000000,
+            "versionName": "1.0.0",
+            "buildVersion": "1",
+            "icon": "$media:layered_image",
+            "label": "$string:app_name"
           }
         }
+        """, at: directory)
+        try write("AppScope/resources/base/element/string.json", """
+        {
+          "string": [
+            {
+              "name": "app_name",
+              "value": \(appName)
+            }
+          ]
+        }
+        """, at: directory)
+        try write("AppScope/resources/base/media/layered_image.json", Self.layeredImageJSON, at: directory)
+        try writeData("AppScope/resources/base/media/background.png", placeholderPNG, at: directory)
+        try writeData("AppScope/resources/base/media/foreground.png", placeholderPNG, at: directory)
+        try write("entry/build-profile.json5", """
+        {
+          "apiType": "stageMode",
+          "buildOption": {
+            "resOptions": {
+              "copyCodeResource": {
+                "enable": false
+              }
+            }
+          },
+          "buildOptionSet": [
+            {
+              "name": "release",
+              "arkOptions": {
+                "obfuscation": {
+                  "ruleOptions": {
+                    "enable": false,
+                    "files": [
+                      "./obfuscation-rules.txt"
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "targets": [
+            {
+              "name": "default"
+            },
+            {
+              "name": "ohosTest"
+            }
+          ]
+        }
+        """, at: directory)
+        try write("entry/hvigorfile.ts", """
+        import { hapTasks } from '@ohos/hvigor-ohos-plugin';
+
+        export default {
+          system: hapTasks,
+          plugins: []
+        }
+        """, at: directory)
+        try write("entry/oh-package.json5", """
+        {
+          "name": "entry",
+          "version": "1.0.0",
+          "description": "HarmonyOS entry module.",
+          "main": "",
+          "author": "",
+          "license": "",
+          "dependencies": {}
+        }
+        """, at: directory)
+        try write("entry/obfuscation-rules.txt", """
+        # Define project specific obfuscation rules here.
+        -enable-property-obfuscation
+        -enable-toplevel-obfuscation
+        -enable-filename-obfuscation
+        -enable-export-obfuscation
         """, at: directory)
         try write("entry/src/main/module.json5", """
         {
-          module: {
-            name: "entry",
-            type: "entry",
-            srcEntry: "./ets/Application/AbilityStage.ets",
-            abilities: [{
-              name: "EntryAbility",
-              srcEntry: "./ets/entryability/EntryAbility.ets",
-              exported: true,
-              startWindowIcon: "$media:app_icon",
-              startWindowBackground: "$color:start_window_background"
-            }]
+          "module": {
+            "name": "entry",
+            "type": "entry",
+            "description": "$string:module_desc",
+            "mainElement": "EntryAbility",
+            "deviceTypes": [
+              "phone"
+            ],
+            "deliveryWithInstall": true,
+            "installationFree": false,
+            "pages": "$profile:main_pages",
+            "abilities": [
+              {
+                "name": "EntryAbility",
+                "srcEntry": "./ets/entryability/EntryAbility.ets",
+                "description": "$string:EntryAbility_desc",
+                "icon": "$media:layered_image",
+                "label": "$string:EntryAbility_label",
+                "startWindowIcon": "$media:startIcon",
+                "startWindowBackground": "$color:start_window_background",
+                "exported": true,
+                "skills": [
+                  {
+                    "entities": [
+                      "entity.system.home"
+                    ],
+                    "actions": [
+                      "ohos.want.action.home"
+                    ]
+                  }
+                ]
+              }
+            ],
+            "extensionAbilities": [
+              {
+                "name": "EntryBackupAbility",
+                "srcEntry": "./ets/entrybackupability/EntryBackupAbility.ets",
+                "type": "backup",
+                "exported": false,
+                "metadata": [
+                  {
+                    "name": "ohos.extension.backup",
+                    "resource": "$profile:backup_config"
+                  }
+                ]
+              }
+            ]
           }
         }
         """, at: directory)
+        try write("entry/src/main/resources/base/profile/main_pages.json", """
+        {
+          "src": [
+            "pages/Index"
+          ]
+        }
+        """, at: directory)
+        try write("entry/src/main/resources/base/profile/backup_config.json", """
+        {
+          "allowToBackupRestore": true
+        }
+        """, at: directory)
+        try write("entry/src/main/resources/base/element/string.json", """
+        {
+          "string": [
+            {
+              "name": "module_desc",
+              "value": "module description"
+            },
+            {
+              "name": "EntryAbility_desc",
+              "value": "description"
+            },
+            {
+              "name": "EntryAbility_label",
+              "value": \(appName)
+            }
+          ]
+        }
+        """, at: directory)
+        try write("entry/src/main/resources/base/element/color.json", """
+        {
+          "color": [
+            {
+              "name": "start_window_background",
+              "value": "#FFFFFF"
+            }
+          ]
+        }
+        """, at: directory)
+        try write("entry/src/main/resources/base/element/float.json", """
+        {
+          "float": [
+            {
+              "name": "page_text_font_size",
+              "value": "24fp"
+            }
+          ]
+        }
+        """, at: directory)
+        try write("entry/src/main/resources/base/media/layered_image.json", Self.layeredImageJSON, at: directory)
+        try writeData("entry/src/main/resources/base/media/background.png", placeholderPNG, at: directory)
+        try writeData("entry/src/main/resources/base/media/foreground.png", placeholderPNG, at: directory)
+        try writeData("entry/src/main/resources/base/media/startIcon.png", placeholderPNG, at: directory)
         try write("entry/src/main/ets/pages/Index.ets", """
         @Entry
         @Component
         struct Index {
+          @State message: string = \(pageGreeting);
+
           build() {
-            Row() {
-              Text('Hello, \(name)')
-                .fontSize(24)
+            RelativeContainer() {
+              Text(this.message)
+                .id('HelloWorld')
+                .fontSize($r('app.float.page_text_font_size'))
+                .fontWeight(FontWeight.Bold)
+                .alignRules({
+                  center: { anchor: '__container__', align: VerticalAlign.Center },
+                  middle: { anchor: '__container__', align: HorizontalAlign.Center }
+                })
             }
             .height('100%')
             .width('100%')
-            .justifyContent(FlexAlign.Center)
           }
         }
         """, at: directory)
-        try write("entry/src/main/ets/Application/AbilityStage.ets", """
-        export default class AbilityStage {}
-        """, at: directory)
         try write("entry/src/main/ets/entryability/EntryAbility.ets", """
-        export default class EntryAbility {}
+        import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
+        import { hilog } from '@kit.PerformanceAnalysisKit';
+        import { window } from '@kit.ArkUI';
+
+        const DOMAIN = 0x0000;
+
+        export default class EntryAbility extends UIAbility {
+          onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
+            try {
+              this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
+            } catch (err) {
+              hilog.error(DOMAIN, 'ProjectPlanner', 'Failed to set colorMode. Cause: %{public}s', JSON.stringify(err));
+            }
+            hilog.info(DOMAIN, 'ProjectPlanner', '%{public}s', 'Ability onCreate');
+          }
+
+          onDestroy(): void {
+            hilog.info(DOMAIN, 'ProjectPlanner', '%{public}s', 'Ability onDestroy');
+          }
+
+          onWindowStageCreate(windowStage: window.WindowStage): void {
+            windowStage.loadContent('pages/Index', (err) => {
+              if (err.code) {
+                hilog.error(DOMAIN, 'ProjectPlanner', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
+                return;
+              }
+              hilog.info(DOMAIN, 'ProjectPlanner', 'Succeeded in loading the content.');
+            });
+          }
+
+          onWindowStageDestroy(): void {
+            hilog.info(DOMAIN, 'ProjectPlanner', '%{public}s', 'Ability onWindowStageDestroy');
+          }
+
+          onForeground(): void {
+            hilog.info(DOMAIN, 'ProjectPlanner', '%{public}s', 'Ability onForeground');
+          }
+
+          onBackground(): void {
+            hilog.info(DOMAIN, 'ProjectPlanner', '%{public}s', 'Ability onBackground');
+          }
+        }
+        """, at: directory)
+        try write("entry/src/main/ets/entrybackupability/EntryBackupAbility.ets", """
+        import { hilog } from '@kit.PerformanceAnalysisKit';
+        import { BackupExtensionAbility, BundleVersion } from '@kit.CoreFileKit';
+
+        const DOMAIN = 0x0000;
+
+        export default class EntryBackupAbility extends BackupExtensionAbility {
+          async onBackup() {
+            hilog.info(DOMAIN, 'ProjectPlanner', 'onBackup ok');
+            await Promise.resolve();
+          }
+
+          async onRestore(bundleVersion: BundleVersion) {
+            hilog.info(DOMAIN, 'ProjectPlanner', 'onRestore ok %{public}s', JSON.stringify(bundleVersion));
+            await Promise.resolve();
+          }
+        }
         """, at: directory)
     }
 
@@ -236,12 +557,41 @@ struct TemplateService {
         try content.write(to: fileURL, atomically: true, encoding: .utf8)
     }
 
+    private func writeData(_ relativePath: String, _ data: Data, at root: URL) throws {
+        let fileURL = root.appendingPathComponent(relativePath)
+        try fileManager.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try data.write(to: fileURL, options: .atomic)
+    }
+
     private func sanitizedIdentifier(_ value: String) -> String {
         let scalars = value.unicodeScalars.map { CharacterSet.alphanumerics.contains($0) ? Character($0) : Character("_") }
         let joined = String(scalars)
         let prefixed = joined.first?.isNumber == true ? "_\(joined)" : joined
         return prefixed.isEmpty ? "ClientApp" : prefixed
     }
+
+    private func jsonStringLiteral(_ value: String) -> String {
+        let data = try? JSONEncoder().encode(value)
+        return data.flatMap { String(data: $0, encoding: .utf8) } ?? "\"\(value)\""
+    }
+
+    private func arkTSStringLiteral(_ value: String) -> String {
+        let escaped = value
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "'", with: "\\'")
+        return "'\(escaped)'"
+    }
+
+    private static let layeredImageJSON = """
+    {
+      "layered-image": {
+        "background": "$media:background",
+        "foreground": "$media:foreground"
+      }
+    }
+    """
+
+    private static let placeholderPNGData = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/p9sAAAAASUVORK5CYII=")!
 
     private func iosPBXProj(module: String) -> String {
         """
