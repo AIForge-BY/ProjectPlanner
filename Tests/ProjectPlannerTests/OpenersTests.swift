@@ -3,12 +3,21 @@ import XCTest
 
 final class OpenersTests: XCTestCase {
     func testIDESelectionUsesProjectTypeDefaults() {
-        let opener = IDEOpener()
+        let opener = IDEOpener(fileExists: { _ in false })
 
         XCTAssertEqual(opener.command(for: project(type: .android)).arguments, ["-a", "Android Studio", "/tmp/App"])
         XCTAssertEqual(opener.command(for: project(type: .ios)).arguments, ["-a", "Xcode", "/tmp/App"])
-        XCTAssertEqual(opener.command(for: project(type: .harmony)).arguments, ["-a", "DevEco Studio", "/tmp/App"])
+        XCTAssertEqual(opener.command(for: project(type: .harmony)).arguments, ["-a", "DevEco-Studio", "/tmp/App"])
         XCTAssertEqual(opener.command(for: project(type: .other)).arguments, ["-a", "Visual Studio Code", "/tmp/App"])
+    }
+
+    func testIDESelectionUsesInstalledDevEcoStudioApplicationPath() {
+        let opener = IDEOpener(fileExists: { $0.path == "/Applications/DevEco-Studio.app" })
+
+        let command = opener.command(for: project(type: .harmony))
+
+        XCTAssertEqual(command.executableURL.path, "/usr/bin/open")
+        XCTAssertEqual(command.arguments, ["-a", "/Applications/DevEco-Studio.app", "/tmp/App"])
     }
 
     func testIDESelectionUsesApplicationOverride() {

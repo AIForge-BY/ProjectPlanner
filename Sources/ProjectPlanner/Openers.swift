@@ -1,6 +1,19 @@
 import Foundation
 
 struct IDEOpener {
+    private static let devEcoApplicationURLs = [
+        URL(fileURLWithPath: "/Applications/DevEco-Studio.app"),
+        URL(fileURLWithPath: "/Applications/DevEco Studio.app"),
+        URL(fileURLWithPath: "\(NSHomeDirectory())/Applications/DevEco-Studio.app"),
+        URL(fileURLWithPath: "\(NSHomeDirectory())/Applications/DevEco Studio.app")
+    ]
+
+    let fileExists: (URL) -> Bool
+
+    init(fileExists: @escaping (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }) {
+        self.fileExists = fileExists
+    }
+
     func command(for project: PlannedProject) -> CommandInvocation {
         switch project.ideOverride {
         case .applicationPath(let path):
@@ -22,7 +35,7 @@ struct IDEOpener {
         case .ios:
             return "Xcode"
         case .harmony:
-            return "DevEco Studio"
+            return Self.devEcoApplicationURLs.first(where: fileExists)?.path ?? "DevEco-Studio"
         case .other:
             return "Visual Studio Code"
         }
