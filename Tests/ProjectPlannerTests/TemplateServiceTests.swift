@@ -38,6 +38,7 @@ final class TemplateServiceTests: XCTestCase {
         let result = try service.generateTemplate(type: .harmony, name: "ClientApp", at: directory)
 
         XCTAssertEqual(result.id, "harmony-arkts")
+        XCTAssertTrue(fileExists(directory, ".gitignore"))
         XCTAssertTrue(fileExists(directory, "build-profile.json5"))
         XCTAssertTrue(fileExists(directory, "hvigorfile.ts"))
         XCTAssertTrue(fileExists(directory, "hvigor/hvigor-config.json5"))
@@ -48,6 +49,7 @@ final class TemplateServiceTests: XCTestCase {
         XCTAssertTrue(fileExists(directory, "AppScope/resources/base/media/background.png"))
         XCTAssertTrue(fileExists(directory, "AppScope/resources/base/media/foreground.png"))
         XCTAssertTrue(fileExists(directory, "entry/build-profile.json5"))
+        XCTAssertTrue(fileExists(directory, "entry/.gitignore"))
         XCTAssertTrue(fileExists(directory, "entry/hvigorfile.ts"))
         XCTAssertTrue(fileExists(directory, "entry/oh-package.json5"))
         XCTAssertTrue(fileExists(directory, "entry/src/main/module.json5"))
@@ -68,6 +70,16 @@ final class TemplateServiceTests: XCTestCase {
         XCTAssertTrue(try read(directory, "entry/src/main/module.json5").contains("\"pages\": \"$profile:main_pages\""))
         XCTAssertTrue(try read(directory, "entry/src/main/ets/entryability/EntryAbility.ets").contains("windowStage.loadContent('pages/Index'"))
         XCTAssertTrue(try read(directory, "entry/src/main/ets/pages/Index.ets").contains("'Hello, ClientApp'"))
+        let rootGitIgnore = try read(directory, ".gitignore")
+        XCTAssertTrue(rootGitIgnore.contains(".hvigor/"))
+        XCTAssertTrue(rootGitIgnore.contains(".idea/"))
+        XCTAssertTrue(rootGitIgnore.contains("oh_modules/"))
+        XCTAssertTrue(rootGitIgnore.contains("oh-package-lock.json5"))
+        XCTAssertTrue(rootGitIgnore.contains("build/"))
+        let entryGitIgnore = try read(directory, "entry/.gitignore")
+        XCTAssertTrue(entryGitIgnore.contains("build/"))
+        XCTAssertTrue(entryGitIgnore.contains("oh_modules/"))
+        XCTAssertTrue(entryGitIgnore.contains("oh-package-lock.json5"))
         XCTAssertTrue(try read(directory, "AGENTS.md").contains("Project type: HarmonyOS"))
     }
 

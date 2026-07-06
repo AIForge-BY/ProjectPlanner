@@ -144,6 +144,16 @@ struct TemplateService {
         let pageGreeting = arkTSStringLiteral("Hello, \(name)")
         let placeholderPNG = Self.placeholderPNGData
 
+        try write(".gitignore", """
+        .hvigor/
+        .idea/
+        .preview/
+        build/
+        oh_modules/
+        oh-package-lock.json5
+        local.properties
+        *.iml
+        """, at: directory)
         try write("build-profile.json5", """
         {
           "app": {
@@ -298,6 +308,12 @@ struct TemplateService {
             }
           ]
         }
+        """, at: directory)
+        try write("entry/.gitignore", """
+        build/
+        oh_modules/
+        oh-package-lock.json5
+        .preview/
         """, at: directory)
         try write("entry/hvigorfile.ts", """
         import { hapTasks } from '@ohos/hvigor-ohos-plugin';
