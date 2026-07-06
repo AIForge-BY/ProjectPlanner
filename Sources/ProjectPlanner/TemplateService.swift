@@ -149,6 +149,8 @@ struct TemplateService {
 
         try write(".gitignore", """
         .agent/
+        .codex/
+        .claude/
         .hvigor/
         .idea/
         .preview/
@@ -574,6 +576,8 @@ struct TemplateService {
     private func writeDefaultGitIgnore(at directory: URL) throws {
         try write(".gitignore", """
         .agent/
+        .codex/
+        .claude/
         .DS_Store
         build/
         """, at: directory)

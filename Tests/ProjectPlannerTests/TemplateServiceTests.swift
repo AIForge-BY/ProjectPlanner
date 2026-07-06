@@ -12,7 +12,10 @@ final class TemplateServiceTests: XCTestCase {
         XCTAssertTrue(fileExists(directory, "ClientApp.xcodeproj/project.pbxproj"))
         XCTAssertTrue(fileExists(directory, "ClientApp/App.swift"))
         XCTAssertTrue(fileExists(directory, "ClientApp/ContentView.swift"))
-        XCTAssertTrue(try read(directory, ".gitignore").contains(".agent/"))
+        let gitIgnore = try read(directory, ".gitignore")
+        XCTAssertTrue(gitIgnore.contains(".agent/"))
+        XCTAssertTrue(gitIgnore.contains(".codex/"))
+        XCTAssertTrue(gitIgnore.contains(".claude/"))
         XCTAssertTrue(fileExists(directory, "AGENTS.md"))
         XCTAssertTrue(try read(directory, "AGENTS.md").contains("Project type: iOS"))
     }
@@ -29,7 +32,10 @@ final class TemplateServiceTests: XCTestCase {
         XCTAssertTrue(fileExists(directory, "app/build.gradle.kts"))
         XCTAssertTrue(fileExists(directory, "app/src/main/AndroidManifest.xml"))
         XCTAssertTrue(fileExists(directory, "app/src/main/java/com/example/clientapp/MainActivity.kt"))
-        XCTAssertTrue(try read(directory, ".gitignore").contains(".agent/"))
+        let gitIgnore = try read(directory, ".gitignore")
+        XCTAssertTrue(gitIgnore.contains(".agent/"))
+        XCTAssertTrue(gitIgnore.contains(".codex/"))
+        XCTAssertTrue(gitIgnore.contains(".claude/"))
         XCTAssertTrue(try read(directory, "AGENTS.md").contains("Project type: Android"))
     }
 
@@ -75,6 +81,8 @@ final class TemplateServiceTests: XCTestCase {
         let rootGitIgnore = try read(directory, ".gitignore")
         XCTAssertTrue(rootGitIgnore.contains(".hvigor/"))
         XCTAssertTrue(rootGitIgnore.contains(".agent/"))
+        XCTAssertTrue(rootGitIgnore.contains(".codex/"))
+        XCTAssertTrue(rootGitIgnore.contains(".claude/"))
         XCTAssertTrue(rootGitIgnore.contains(".idea/"))
         XCTAssertTrue(rootGitIgnore.contains("oh_modules/"))
         XCTAssertTrue(rootGitIgnore.contains("oh-package-lock.json5"))
@@ -95,7 +103,10 @@ final class TemplateServiceTests: XCTestCase {
         XCTAssertEqual(result.id, "generic-vscode")
         XCTAssertTrue(fileExists(directory, "README.md"))
         XCTAssertTrue(fileExists(directory, ".vscode/settings.json"))
-        XCTAssertTrue(try read(directory, ".gitignore").contains(".agent/"))
+        let gitIgnore = try read(directory, ".gitignore")
+        XCTAssertTrue(gitIgnore.contains(".agent/"))
+        XCTAssertTrue(gitIgnore.contains(".codex/"))
+        XCTAssertTrue(gitIgnore.contains(".claude/"))
         XCTAssertTrue(try read(directory, "AGENTS.md").contains("Project type: Other"))
     }
 
