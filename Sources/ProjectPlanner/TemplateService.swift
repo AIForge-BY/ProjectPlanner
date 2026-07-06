@@ -20,10 +20,12 @@ struct TemplateService {
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
         switch type {
         case .ios:
+            try writeDefaultGitIgnore(at: directory)
             try generateIOS(name: name, at: directory)
             try writeAgents(projectType: "iOS", at: directory)
             return GeneratedTemplate(id: "ios-swiftui", version: 1)
         case .android:
+            try writeDefaultGitIgnore(at: directory)
             try generateAndroid(name: name, at: directory)
             try writeAgents(projectType: "Android", at: directory)
             return GeneratedTemplate(id: "android-kotlin", version: 1)
@@ -32,6 +34,7 @@ struct TemplateService {
             try writeAgents(projectType: "HarmonyOS", at: directory)
             return GeneratedTemplate(id: "harmony-arkts", version: 1)
         case .other:
+            try writeDefaultGitIgnore(at: directory)
             try generateOther(name: name, at: directory)
             try writeAgents(projectType: "Other", at: directory)
             return GeneratedTemplate(id: "generic-vscode", version: 1)
@@ -145,6 +148,7 @@ struct TemplateService {
         let placeholderPNG = Self.placeholderPNGData
 
         try write(".gitignore", """
+        .agent/
         .hvigor/
         .idea/
         .preview/
@@ -564,6 +568,14 @@ struct TemplateService {
 
         - Build: fill in after the first successful local build.
         - Test: fill in after tests are added.
+        """, at: directory)
+    }
+
+    private func writeDefaultGitIgnore(at directory: URL) throws {
+        try write(".gitignore", """
+        .agent/
+        .DS_Store
+        build/
         """, at: directory)
     }
 
